@@ -1,6 +1,6 @@
 ---
 description: "创建新项目时，生成 Vue 3 + TypeScript + Vite 项目骨架，支持按需选择插件、UI 库与图标库"
-user-invocable: true
+disable-model-invocation: true
 allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
 ---
 
