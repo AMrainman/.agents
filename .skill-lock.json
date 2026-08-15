@@ -130,6 +130,35 @@
       "pluginName": "mattpocock-skills",
       "installedAt": "2026-08-14T10:20:49.037Z",
       "updatedAt": "2026-08-14T10:20:49.037Z"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/anthropics/skills.git",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "skillFolderHash": "0d5b74a14bdf3ebcd64f352d06376a2ef05ed296",
+      "pluginName": "example-skills",
+      "installedAt": "2026-08-15T02:23:36.200Z",
+      "updatedAt": "2026-08-15T02:23:36.200Z"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/skills.git",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "skillFolderHash": "76a98a285cb0434f3d39e1a873823556330e398b",
+      "installedAt": "2026-08-15T02:30:03.315Z",
+      "updatedAt": "2026-08-15T02:30:03.315Z"
+    },
+    "grill-me": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mattpocock/skills.git",
+      "skillPath": "skills/productivity/grill-me/SKILL.md",
+      "skillFolderHash": "c817f6f36acd483294144694a935a76d3e3eb101",
+      "pluginName": "mattpocock-skills",
+      "installedAt": "2026-08-15T02:36:42.794Z",
+      "updatedAt": "2026-08-15T02:36:42.794Z"
     }
   },
   "dismissed": {
