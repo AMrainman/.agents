@@ -8,6 +8,25 @@
 
 Skill 是为 AI 编码助手（如 [pi](https://github.com/badlogic/pi-mono)、Claude Code 等）提供的「专项任务说明书」，通常以 `SKILL.md` 形式存在。当任务与 Skill 描述匹配时，助手会加载对应说明并按其指引执行。
 
+### skill 搜索、查看、安装、更新、卸载
+
+```bash
+# 1. 搜索社区技能（关键词匹配）
+npx skills find <关键词>
+
+# 2. 安装技能（-y 跳过确认，-g 全局安装，必加！）
+npx skills add <owner/repo@skill> -y -g
+
+# 3. 查看已安装的全部技能
+npx skills list -g
+
+# 4. 更新所有技能
+npx skills update -g
+
+# 5. 卸载某些技能，执行命令进入选择
+npx skills remove -g
+```
+
 ## 目录结构
 
 ```
@@ -31,6 +50,8 @@ Skill 是为 AI 编码助手（如 [pi](https://github.com/badlogic/pi-mono)、C
 | kimi-webbridge | 控制真实浏览器进行网页交互 |
 
 ### [mattpocock/skills](https://github.com/mattpocock/skills)
+
+个人开发流程：setup + grill-with-docs + to-spec + to-tickets + implement（tdd/code-review）
 
 | Skill | 说明 |
 | --- | --- |
