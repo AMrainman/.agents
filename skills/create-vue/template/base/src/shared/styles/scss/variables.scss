@@ -1,0 +1,46 @@
+// ============================================================
+// 全局 SCSS 设计令牌
+// 经 vite additionalData 自动注入，组件 <style lang="scss"> 中直接使用，无需手动引入。
+//
+// 约定：
+// 1. 颜色一律使用 theme.css 的 CSS 变量（rgb(var(--color-*))），
+//    禁止编写 scss 颜色变量
+//    禁止在此硬编码色值，否则日间/夜间模式切换会失效。
+// 2. 间距等静态令牌与 Tailwind 默认刻度（4px 步进）对齐。
+// ============================================================
+
+// ---------- 间距（与 Tailwind 4px 步进对齐） ----------
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 12px;
+$spacing-lg: 16px;
+$spacing-xl: 24px;
+$spacing-2xl: 32px;
+
+// ---------- 圆角 ----------
+$radius-sm: 4px;
+$radius-md: 6px;
+$radius-lg: 8px;
+$radius-xl: 12px;
+$radius-full: 9999px;
+
+// ---------- 字号 / 字重 ----------
+$text-xs: 12px;
+$text-sm: 14px;
+$text-base: 16px;
+$text-lg: 18px;
+$text-xl: 20px;
+
+$font-medium: 500;
+$font-semibold: 600;
+$font-bold: 700;
+
+// ---------- 过渡 ----------
+$transition-fast: 150ms ease;
+$transition-base: 200ms ease;
+$transition-slow: 300ms ease;
+
+// ---------- 阴影 ----------
+$shadow-sm: 0 1px 2px rgb(var(--color-overlay) / 0.05);
+$shadow-md: 0 4px 12px rgb(var(--color-overlay) / 0.08);
+$shadow-lg: 0 8px 24px rgb(var(--color-overlay) / 0.12);

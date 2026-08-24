@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onErrorCaptured, ref } from 'vue'
-import AppShell from '@/shared/components/AppShell.vue'
-import HomeView from '@/features/home/views/HomeView.vue'
+import DefaultLayout from '@/layouts/DefaultLayout.vue'
 
 const capturedError = ref<Error | null>(null)
 
@@ -17,7 +16,7 @@ function reload() {
 </script>
 
 <template>
-  <AppShell>
+  <DefaultLayout>
     <div v-if="capturedError" class="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
       <div class="rounded-lg bg-danger-subtle px-6 py-4 text-danger-text">
         <p class="font-semibold">应用发生错误</p>
@@ -31,6 +30,6 @@ function reload() {
         重新加载
       </button>
     </div>
-    <HomeView v-else />
-  </AppShell>
+    <RouterView v-else />
+  </DefaultLayout>
 </template>

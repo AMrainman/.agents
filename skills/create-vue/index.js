@@ -17,8 +17,8 @@ function parseOptionsArg() {
 async function main() {
   const options = parseOptionsArg()
   if (!options) {
-    console.error('请通过 --options 传入插件组合，例如：')
-    console.error(`node index.js --options '{"basePlugins":["vue-router"],"uiLibraries":[],"iconLibraries":[],"dxPlugins":[]}'`)
+    console.error('请通过 --options 传入生成选项，例如：')
+    console.error(`node index.js --options '{"dualPlatform":false,"uiLibrary":"element-plus","iconLibrary":"fontawesome"}'`)
     process.exit(1)
   }
 

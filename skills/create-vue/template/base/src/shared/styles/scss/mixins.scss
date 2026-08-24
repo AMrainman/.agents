@@ -1,0 +1,68 @@
+// ============================================================
+// 全局 SCSS Mixins
+// 经 vite additionalData 自动注入，组件 <style lang="scss"> 中直接 @include 使用，无需手动引入。
+// ============================================================
+
+// ---------- 文本省略 ----------
+// 单行省略：@include ellipsis;
+// 多行省略：@include ellipsis(2);
+@mixin ellipsis($lines: 1) {
+  @if $lines == 1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  } @else {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: $lines;
+    overflow: hidden;
+  }
+}
+
+// ---------- 弹性居中 ----------
+// @include flex-center;（水平排列）
+// @include flex-center(column);（垂直排列）
+@mixin flex-center($direction: row) {
+  display: flex;
+  flex-direction: $direction;
+  align-items: center;
+  justify-content: center;
+}
+
+// ---------- 绝对定位铺满父容器 ----------
+// 父容器需为 position: relative
+@mixin fill-parent {
+  position: absolute;
+  inset: 0;
+}
+
+// ---------- 自定义滚动条（WebKit） ----------
+// @include scrollbar; 或 @include scrollbar(4px, rgb(var(--color-border)));
+@mixin scrollbar($size: 6px, $thumb: rgb(var(--color-border-strong))) {
+  &::-webkit-scrollbar {
+    width: $size;
+    height: $size;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: $size;
+    background: $thumb;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+// ---------- 无障碍隐藏（视觉隐藏，保留给读屏软件） ----------
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

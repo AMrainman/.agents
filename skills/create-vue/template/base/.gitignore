@@ -3,12 +3,11 @@ dist
 dist-ssr
 *.local
 coverage
-storybook-static
-*storybook.log
 .env
 .env.*
 !.env.example
 
-# 自动生成声明
+# unplugin 自动生成产物
+.eslintrc-auto-import.json
 src/auto-imports.d.ts
 src/components.d.ts
