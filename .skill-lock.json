@@ -106,9 +106,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/productivity/grilling/SKILL.md",
-      "skillFolderHash": "0d40d978f1a588971a11ea7ae85b208e78102dc3",
+      "skillFolderHash": "f0732035b8b1b60ae39454e4191caef32fa91903",
       "installedAt": "2026-08-14T10:20:49.033Z",
-      "updatedAt": "2026-08-20T08:26:51.319Z"
+      "updatedAt": "2026-09-18T06:12:36.383Z"
     },
     "setup-matt-pocock-skills": {
       "source": "mattpocock/skills",
@@ -124,10 +124,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/anthropics/skills.git",
       "skillPath": "skills/frontend-design/SKILL.md",
-      "skillFolderHash": "0d5b74a14bdf3ebcd64f352d06376a2ef05ed296",
-      "pluginName": "example-skills",
+      "skillFolderHash": "d79e2a5bb4df4a386c2adcdd9ab8709bba28c3f6",
       "installedAt": "2026-08-15T02:23:36.200Z",
-      "updatedAt": "2026-08-15T02:23:36.200Z"
+      "updatedAt": "2026-09-18T06:13:40.114Z"
     },
     "find-skills": {
       "source": "vercel-labs/skills",
