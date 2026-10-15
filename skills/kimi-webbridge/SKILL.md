@@ -166,7 +166,14 @@ Decoded PDF cap is 100 MB. Above that the daemon refuses; reduce `scale` or spli
 
 ## If a tool call fails (daemon or extension not ready)
 
-**If a tool call can't reach the daemon (connection refused), or the reply isn't the `ok` envelope above (another program is answering on that port), run `start` yourself, don't ask the user. It is safe anytime: it no-ops if the daemon is already up.** The binary is not on PATH: `~/.kimi-webbridge/bin/kimi-webbridge` (Windows: `%USERPROFILE%\.kimi-webbridge\bin\kimi-webbridge.exe`).
+**If a tool call can't reach the daemon (connection refused), or the reply isn't the `ok` envelope above (another program is answering on that port), run the auto-heal script yourself first — don't ask the user to install or start anything:**
+
+- Windows: `powershell -ExecutionPolicy Bypass -File scripts/ensure-webbridge.ps1` (run from this skill's folder)
+- macOS / Linux: `bash scripts/ensure-webbridge.sh` (run from this skill's folder)
+
+The script health-checks the daemon, runs `start` if it's down (`start` is safe anytime: it no-ops if the daemon is already up), and if the binary is missing it runs the official installer (`irm https://cdn.kimi.com/webbridge/install.ps1 | iex` / `curl -fsSL https://cdn.kimi.com/webbridge/install.sh | bash`) and then starts the daemon. If it prints `OK:`, retry the tool call. If it prints `FAIL:` — or the port is held by another program — proceed with the manual steps below. Tell the user once, in their language, that you installed/started the daemon for them.
+
+The binary is not on PATH: `~/.kimi-webbridge/bin/kimi-webbridge` (Windows: `%USERPROFILE%\.kimi-webbridge\bin\kimi-webbridge.exe`).
 
 Where the daemon listens is always in `start`'s output, or in `kimi-webbridge status` (`port` when it is running, `addr` when it is not). If it isn't `127.0.0.1:10086`, use that address for every call in this task. The config file is only for moving the daemon, never for finding it. Then retry the tool call.
 
@@ -174,7 +181,7 @@ Where the daemon listens is always in `start`'s output, or in `kimi-webbridge st
 
 **`start` fails with "did not come up … held by another program"** → another program owns the port. Move the daemon: write `{"addr":"127.0.0.1:<port>"}` (a free port of your choice) to the config file the error names, run `start` again, then ask the user to point the extension at the new port once (Kimi side panel → Settings → Local agent remote control → Connection address → `ws://127.0.0.1:<port>/ws`; it remembers).
 
-If it still fails, the binary is missing (`command not found` means kimi-webbridge isn't installed), or the browser extension won't connect — point the user to the help page instead of deep-troubleshooting:
+If the daemon is still not up after the auto-heal script (e.g. its port is held by another program), or the browser extension won't connect — point the user to the help page instead of deep-troubleshooting. (The daemon side is fixed automatically by the script; the browser extension itself can only be installed/enabled/updated by the user in Chrome.)
 
 - English: https://www.kimi.com/en/products/kimi-webbridge
 - 中文: https://www.kimi.com/products/kimi-webbridge
