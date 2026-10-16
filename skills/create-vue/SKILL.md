@@ -1,5 +1,5 @@
 ---
-description: "创建新项目时，生成 Vue 3 + TypeScript + Vite 项目骨架（内置 Router/MSW/ESLint/Prettier/Vitest/auto-import），支持选择端适配、UI 库与图标库"
+description: "创建新项目时，生成 Vue 3 + TypeScript + Vite 项目骨架（内置 Router/MSW/Storybook/ESLint/Prettier/Vitest/auto-import/多环境构建），支持选择端适配、UI 库与图标库"
 disable-model-invocation: true
 allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
 ---
@@ -8,7 +8,7 @@ allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
 
 在当前目录生成一个 Vue 3 项目骨架。使用 `AskUserQuestion` 收集用户选择，然后调用生成脚本。
 
-骨架**内置**（无需询问）：Vue Router、MSW、ESLint、Prettier、Vitest、unplugin-auto-import、unplugin-vue-components、Tailwind CSS + SCSS、Pinia、日/夜主题。
+骨架**内置**（无需询问）：Vue Router、MSW、ESLint、Prettier、Vitest、unplugin-auto-import、unplugin-vue-components、Tailwind CSS + SCSS、Pinia、日/夜主题、Storybook（MSW + 主题切换贯通）、多环境构建（dev/test/prod）。
 
 ## 用法
 
@@ -26,12 +26,12 @@ allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
    {
      "questions": [
        {
-         "question": "目标端是？（双端适配将锁定 UI 库为 Element Plus + Vant，并生成 platform 基础组件与统一封装）",
+         "question": "目标端是？（双端适配将锁定 UI 库为 Element Plus + Vant，并生成容器查询响应式方案、platform 基础组件与统一封装）",
          "header": "端适配",
          "multiSelect": false,
          "options": [
-           { "label": "仅 Web 端", "description": "不生成平台适配层，业务代码直接使用所选 UI 库" },
-           { "label": "双端适配（桌面 + 移动 H5）", "description": "生成 usePlatform / platform 基础组件 / useDialog / toast" }
+           { "label": "仅 Web 端", "description": "不生成平台适配层与响应式方案，业务代码直接使用所选 UI 库" },
+           { "label": "双端适配（桌面 + 移动 H5）", "description": "容器查询响应式 + usePlatform / platform 基础组件 / useDialog / toast" }
          ]
        }
      ]
@@ -65,7 +65,7 @@ allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
 
    其中 `<json>` 是步骤 4 构造的 JSON 字符串。
 
-7. **报告结果**：生成完成后告知用户项目骨架已生成，并提示手动执行 `npm install` 与 `npm run dev`。
+7. **报告结果**：生成完成后告知用户项目骨架已生成（含 `AGENTS.md` 约定文件、`.storybook/` 配置与多环境 `.env`），并提示手动执行 `npm install` 与 `npm run dev`（另可用 `npm run storybook` 启动组件开发环境）。
    - `package.json` 已内置 `postinstall` 脚本（`msw init public/ --save`），执行 `npm install` 后自动生成 `public/mockServiceWorker.js`，避免开发环境出现"应用启动失败"。
 
 ## 选项 JSON 示例
@@ -106,11 +106,11 @@ allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
 
 ```
 skills/create-vue/template/
-├── base/                  # 必选核心（含全部内置插件）
-└── dual-platform/         # 双端适配附加文件（platform 组件 / usePlatform / useDialog / toast / HomeView 覆盖）
+├── base/                  # 必选核心（含全部内置插件、.storybook/、多环境 .env、示例 story）
+└── dual-platform/         # 双端适配附加文件（platform 组件 / usePlatform / useDialog / toast / HomeView 与 Button story 覆盖）
 ```
 
-`vite.config.ts`、`vitest.config.ts`、`CLAUDE.md` 由 `lib/generate.js` 按选项动态生成；不选双端适配时会自动移除 `@tailwindcss/container-queries` 依赖与 tailwind 插件配置。
+`vite.config.ts`、`vitest.config.ts`、`AGENTS.md` 由 `lib/generate.js` 按选项动态生成；不选双端适配时会自动移除 `@tailwindcss/container-queries` 依赖与 tailwind 插件配置，选双端适配时 `vite.config.ts` 会额外启用 basic-ssl（仅 dev serve 生效）。
 
 ## 禁止行为
 

@@ -6,7 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:dev": "vue-tsc -b && vite build --mode development",
+    "build:test": "vue-tsc -b && vite build --mode test",
+    "build:prod": "vue-tsc -b && vite build --mode production",
     "preview": "vite preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
     "type-check": "vue-tsc -b",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -21,6 +26,8 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@storybook/vue3": "^10.6.0",
+    "@storybook/vue3-vite": "^10.6.0",
     "@tailwindcss/container-queries": "^0.1.1",
     "@types/node": "^24.13.2",
     "@vitejs/plugin-vue": "^6.0.7",
@@ -37,6 +44,7 @@
     "postcss": "^8.4.39",
     "prettier": "^3.9.4",
     "sass": "^1.102.0",
+    "storybook": "^10.6.0",
     "tailwindcss": "^3.4.6",
     "typescript": "^5.9.0",
     "unplugin-auto-import": "^0.18.0",

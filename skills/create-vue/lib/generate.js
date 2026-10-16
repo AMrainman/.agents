@@ -28,9 +28,9 @@ export async function generateProject(targetDir, options) {
   patchPackageJson(targetDir, { dual, uiLibraries, iconLibrary })
   patchTailwindConfig(targetDir, { dual })
   patchEslintConfig(targetDir, { dual })
-  generateViteConfig(targetDir, { uiLibraries })
+  generateViteConfig(targetDir, { dual, uiLibraries })
   generateVitestConfig(targetDir, { uiLibraries })
-  generateClaudeMd(targetDir, { dual, uiLibraries, iconLibrary })
+  generateAgentsMd(targetDir, { dual, uiLibraries, iconLibrary })
 
   if (dual) {
     cpSync(join(TEMPLATE_ROOT, 'dual-platform', 'src'), join(targetDir, 'src'), { recursive: true, force: true })
@@ -51,7 +51,10 @@ function patchPackageJson(targetDir, { dual, uiLibraries, iconLibrary }) {
   if (iconLibrary) {
     Object.assign(pkg.dependencies, ICON_LIBRARY_DEPS[iconLibrary])
   }
-  if (!dual) {
+  if (dual) {
+    // 双端真机调试（摄像头/麦克风等能力要求安全上下文）需要开发服务支持 HTTPS
+    pkg.devDependencies['@vitejs/plugin-basic-ssl'] = '^2.3.0'
+  } else {
     delete pkg.devDependencies['@tailwindcss/container-queries']
   }
 
@@ -120,7 +123,7 @@ function patchEslintConfig(targetDir, { dual }) {
   writeFileSync(configPath, replaced)
 }
 
-function generateViteConfig(targetDir, { uiLibraries }) {
+function generateViteConfig(targetDir, { dual, uiLibraries }) {
   const hasElementPlus = uiLibraries.includes('element-plus')
   const hasVant = uiLibraries.includes('vant')
   const hasResolver = hasElementPlus || hasVant
@@ -136,46 +139,78 @@ function generateViteConfig(targetDir, { uiLibraries }) {
     const resolvers = [hasElementPlus && 'ElementPlusResolver', hasVant && 'VantResolver'].filter(Boolean)
     imports.push(`import { ${resolvers.join(', ')} } from 'unplugin-vue-components/resolvers'`)
   }
+  if (dual) {
+    imports.push("import basicSsl from '@vitejs/plugin-basic-ssl'")
+  }
 
   const componentsResolvers = [
     hasElementPlus && "ElementPlusResolver({ importStyle: 'css' })",
     hasVant && "VantResolver({ importStyle: true })",
   ].filter(Boolean)
 
-  const content = `${imports.join('\n')}
+  const pluginLines = [
+    ...(dual
+      ? [
+          '    // 仅在开发服务时生成自签证书启用 HTTPS（便于手机通过 https://<本机IP> 真机调试）',
+          '    ...(isServe ? [basicSsl()] : []),',
+        ]
+      : []),
+    '    vue(),',
+    '    AutoImport({',
+    "      imports: ['vue', 'vue-router', 'pinia'],",
+    "      dts: 'src/auto-imports.d.ts',",
+    "      dirs: ['src/shared/composables', 'src/shared/stores'],",
+    '      vueTemplate: true,',
+    '      eslintrc: {',
+    '        enabled: true,',
+    '      },',
+    ...(hasElementPlus ? ['      resolvers: [ElementPlusResolver()],'] : []),
+    '    }),',
+    '    Components({',
+    "      dirs: ['src/shared/components'],",
+    "      dts: 'src/components.d.ts',",
+    '      deep: true,',
+    ...(componentsResolvers.length ? [`      resolvers: [${componentsResolvers.join(', ')}],`] : []),
+    '    }),',
+  ]
+
+  const configBody = [
+    '  css: {',
+    '    preprocessorOptions: {',
+    '      scss: {',
+    '        // 自动注入全局变量与 mixin，组件 <style lang="scss"> 中可直接使用，无需手动引入',
+    '        additionalData:',
+    '          \'@use "@/shared/styles/scss/variables" as *;@use "@/shared/styles/scss/mixins" as *;\',',
+    '      },',
+    '    },',
+    '  },',
+    '  plugins: [',
+    ...pluginLines,
+    '  ],',
+    '  resolve: {',
+    '    alias: {',
+    "      '@': resolve(import.meta.dirname, 'src'),",
+    '    },',
+    '  },',
+  ].join('\n')
+
+  // 双端适配时包一层函数：serve（dev/preview）启用 basicSsl，build 时忽略
+  const content = dual
+    ? `${imports.join('\n')}
+
+export default defineConfig(({ command }) => {
+  // serve = vite / vite preview；build = vite build。仅开发服务启用 HTTPS
+  const isServe = command === 'serve'
+
+  return {
+${configBody}
+  }
+})
+`
+    : `${imports.join('\n')}
 
 export default defineConfig({
-  css: {
-    preprocessorOptions: {
-      scss: {
-        // 自动注入全局变量与 mixin，组件 <style lang="scss"> 中可直接使用，无需手动引入
-        additionalData:
-          '@use "@/shared/styles/scss/variables" as *;@use "@/shared/styles/scss/mixins" as *;',
-      },
-    },
-  },
-  plugins: [
-    vue(),
-    AutoImport({
-      imports: ['vue', 'vue-router', 'pinia'],
-      dts: 'src/auto-imports.d.ts',
-      dirs: ['src/shared/composables', 'src/shared/stores'],
-      vueTemplate: true,
-      eslintrc: {
-        enabled: true,
-      },${hasElementPlus ? '\n      resolvers: [ElementPlusResolver()],' : ''}
-    }),
-    Components({
-      dirs: ['src/shared/components'],
-      dts: 'src/components.d.ts',
-      deep: true,${componentsResolvers.length ? `\n      resolvers: [${componentsResolvers.join(', ')}],` : ''}
-    }),
-  ],
-  resolve: {
-    alias: {
-      '@': resolve(import.meta.dirname, 'src'),
-    },
-  },
+${configBody}
 })
 `
 
@@ -265,17 +300,17 @@ ${plugins}
   writeFileSync(join(targetDir, 'vitest.config.ts'), content)
 }
 
-function generateClaudeMd(targetDir, { dual, uiLibraries, iconLibrary }) {
+function generateAgentsMd(targetDir, { dual, uiLibraries, iconLibrary }) {
   const stack = [
-    'Vue 3 + Pinia + TypeScript + Vite + Tailwind CSS + SCSS + Vue Router + MSW + ESLint + Prettier + Vitest',
+    'Vue 3 + Pinia + TypeScript + Vite + Tailwind CSS + SCSS + Vue Router + MSW + Storybook + ESLint + Prettier + Vitest',
     ...uiLibraries.map(ui => UI_LIBRARY_NAMES[ui]),
     ...(iconLibrary ? [ICON_LIBRARY_NAMES[iconLibrary]] : []),
   ].join(' + ')
 
   const lines = [
-    '# CLAUDE.md',
+    '# AGENTS.md',
     '',
-    'This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.',
+    'This file provides guidance to AI coding assistants (pi / Claude Code / etc.) when working with code in this repository.',
     '',
     '## 项目概述',
     '',
@@ -286,11 +321,16 @@ function generateClaudeMd(targetDir, { dual, uiLibraries, iconLibrary }) {
     '```bash',
     'npm run dev',
     'npm run type-check',
-    'npm run build',
+    'npm run build          # 等价于 build:prod',
+    'npm run build:dev      # 加载 .env.development',
+    'npm run build:test     # 加载 .env.test',
+    'npm run build:prod     # 加载 .env.production',
     'npm run test',
     'npm run lint',
     'npm run lint:fix',
     'npm run format',
+    'npm run storybook      # 组件开发环境（端口 6006）',
+    'npm run build-storybook',
     '```',
     '',
     '## 目录结构',
@@ -301,8 +341,46 @@ function generateClaudeMd(targetDir, { dual, uiLibraries, iconLibrary }) {
     '- `src/shared/` — 跨功能复用的组件、组合式函数、store、常量、类型、工具与样式',
     ...(dual ? ['- `src/shared/components/platform/` — 双端自适应基础组件（element-plus / vant 封装）'] : []),
     '- `src/mocks/` — MSW mock（browser.ts / server.ts / handlers.ts）',
+    '- `.storybook/` — Storybook 配置（preview 已全局加载 MSW 与日/夜主题切换）',
+    '- `.env.development` / `.env.test` / `.env.production` — 多环境构建变量（`VITE_*` 前缀）',
     '',
     '## 关键约定',
+    '',
+    '### 视图就近目录化与弹窗拆分',
+    '',
+    '- `features/<feature>/components/` 只放**跨视图复用**的组件；仅被单个视图使用的弹窗、抽屉等独立区块，拆分后就近放在视图自己的目录下。',
+    '- 简单视图保持 `views/` 下平铺单文件，这是默认形态；需要拆出弹窗等独立区块时（多个弹窗、单文件行数明显膨胀是典型信号）就地目录化：',
+    '',
+    '```',
+    'views/',
+    '  user-management/',
+    '    UserManagementView.vue   # 视图：列表 + 行操作编排 + 弹窗打开/刷新',
+    '    components/              # 页面私有组件（自治弹窗等）',
+    '      EditUserDialog.vue',
+    '    __tests__/               # 视图级测试',
+    '```',
+    '',
+    '- 拆分出的弹窗做成**自治组件**：自持表单状态与校验，直调 feature `api/` 原始接口；成功/失败的 toast 均在弹窗内完成；成功后 `emit(\'update:modelValue\', false)` 关闭自己并 `emit(\'saved\')` 通知视图刷新列表。',
+    '- ⚠️ feature 组合式函数若为每次调用独立实例（非 Pinia store），弹窗**不得**自行实例化它来调 mutation——列表刷新会打在弹窗自己的实例上，视图列表不会更新。',
+    '- 弹窗组件命名动词前置：`EditUserDialog.vue`、`AddUserDialog.vue`。',
+    '- 测试就近放置：视图级 spec 放 `views/<view-name>/__tests__/`；弹窗 spec 放其 `components/__tests__/`。',
+    '',
+    '### 图标使用',
+    '',
+    ...(dual
+      ? [
+          '- 图标一律使用图标库，禁止在 `.vue` 模板中内联 `<svg>` 自绘图标。',
+          '- 通用图标（双端均可用）：`@element-plus/icons-vue`，经 `<el-icon>` 渲染；移动端语义图标（如返回箭头）可用 vant 字体图标。',
+          '- 需要跨端的基础图标，封装到 `src/shared/components/platform/` 下的基础组件内统一处理。',
+          '- 其他图标场景使用所选图标库' +
+            (iconLibrary ? `（${ICON_LIBRARY_NAMES[iconLibrary]}）。` : '，按需自行安装。'),
+        ]
+      : [
+          '- 图标一律使用图标库，禁止在 `.vue` 模板中内联 `<svg>` 自绘图标。' +
+            (iconLibrary ? `本项目已预装 ${ICON_LIBRARY_NAMES[iconLibrary]}。` : ''),
+        ]),
+    '- 图标库确实没有对应图标时，允许使用图片资源（`src/**/assets`），并在代码注释中说明原因。',
+    '- 例外：`src/shared/components/ThemeToggle.vue` 为骨架自带基础组件，其内联 SVG 属豁免；新写业务代码不得效仿。',
     '',
   ]
 
@@ -348,7 +426,19 @@ function generateClaudeMd(targetDir, { dual, uiLibraries, iconLibrary }) {
     '- 开发环境自动注册 MSW worker（main.ts 中 `enableMocking`）。',
     '- REST handlers 放在 `src/mocks/handlers.ts`（骨架仅保留 `/api/health` 示例）。',
     '- 测试环境在 `vitest.setup.ts` 中启用 `msw/node` server。',
+    '- Storybook 在 `.storybook/preview.ts` 中全局加载 MSW，story 内请求直接打到 mock。',
     '- `public/mockServiceWorker.js` 由 `postinstall`（`msw init`）自动生成，必须存在。',
+    '',
+    '### Storybook',
+    '',
+    '- `npm run storybook` 启动组件开发环境（端口 6006）。',
+    '- preview 已全局加载 MSW worker 与日/夜主题切换 toolbar（顶部 Theme 开关），无需在单个 story 中重复处理。',
+    '- story 与组件就近放置：`<Component>.stories.ts` 与组件同目录。',
+    '',
+    '### 多环境构建',
+    '',
+    '- `build:dev` / `build:test` / `build:prod` 分别加载 `.env.development` / `.env.test` / `.env.production`。',
+    '- 环境变量统一以 `VITE_` 前缀暴露，经 `import.meta.env.VITE_*` 读取；骨架占位变量为 `VITE_API_BASE_URL`。',
     '',
     '### 代码规范',
     '',
@@ -365,5 +455,5 @@ function generateClaudeMd(targetDir, { dual, uiLibraries, iconLibrary }) {
     ''
   )
 
-  writeFileSync(join(targetDir, 'CLAUDE.md'), lines.join('\n'))
+  writeFileSync(join(targetDir, 'AGENTS.md'), lines.join('\n'))
 }

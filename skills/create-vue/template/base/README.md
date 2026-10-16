@@ -30,4 +30,4 @@ npm run dev
 - `src/shared/` — 跨功能复用的组件、组合式函数、store、类型、工具与样式
 - `src/mocks/` — MSW mock
 
-更多约定见 `CLAUDE.md`。
+更多约定见 `AGENTS.md`。
