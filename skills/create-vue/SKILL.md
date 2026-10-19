@@ -1,12 +1,12 @@
 ---
 description: "创建新项目时，生成 Vue 3 + TypeScript + Vite 项目骨架（内置 Router/MSW/Storybook/ESLint/Prettier/Vitest/auto-import/多环境构建），支持选择端适配、UI 库与图标库"
 disable-model-invocation: true
-allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
+allowed-tools: Bash, Read, Write, Edit
 ---
 
 # create-vue
 
-在当前目录生成一个 Vue 3 项目骨架。使用 `AskUserQuestion` 收集用户选择，然后调用生成脚本。
+在当前目录生成一个 Vue 3 项目骨架。以文本对话收集用户选择，然后调用生成脚本。
 
 骨架**内置**（无需询问）：Vue Router、MSW、ESLint、Prettier、Vitest、unplugin-auto-import、unplugin-vue-components、Tailwind CSS + SCSS、Pinia、日/夜主题、Storybook（MSW + 主题切换贯通）、多环境构建（dev/test/prod）。
 
@@ -25,34 +25,33 @@ allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
    - 若命令带了项目名：用 Bash 执行 `ls -la <project-name>` 检查同名文件/文件夹是否已存在。已存在则提示用户「当前目录已存在名为 `<project-name>` 的文件或文件夹，创建已取消」并**直接结束**。
    - 若没带项目名：用 Bash 执行 `ls -la` 查看当前目录。若目录非空（除 `README.md` 外），向用户说明情况并等待用户决定是否继续。
 
-2. **询问端适配**：调用一次 `AskUserQuestion`（单选）：
+2. **询问端适配**：以文本向用户提问（二选一），格式如下：
 
-   ```json
-   {
-     "questions": [
-       {
-         "question": "目标端是？（双端适配将锁定 UI 库为 Element Plus + Vant，并生成容器查询响应式方案、platform 基础组件与统一封装）",
-         "header": "端适配",
-         "multiSelect": false,
-         "options": [
-           { "label": "仅 Web 端", "description": "不生成平台适配层与响应式方案，业务代码直接使用所选 UI 库" },
-           { "label": "双端适配（桌面 + 移动 H5）", "description": "容器查询响应式 + usePlatform / platform 基础组件 / useDialog / toast" }
-         ]
-       }
-     ]
-   }
-   ```
+   > 目标端是？
+   > 1. 仅 Web 端 —— 不生成平台适配层与响应式方案，业务代码直接使用所选 UI 库
+   > 2. 双端适配（桌面 + 移动 H5）—— 容器查询响应式 + platform 基础组件 + useDialog / toast，锁定 UI 库为 Element Plus + Vant，并默认安装 `@element-plus/icons-vue`
+   >
+   > 直接回复序号或名称即可。
 
-3. **询问 UI 库与图标库**：再调用一次 `AskUserQuestion`（两个问题放在同一 `questions` 数组中）。
-   - 若步骤 2 选择了**双端适配**：跳过 UI 库问题，只问图标库（UI 库自动锁定为 Element Plus + Vant，并默认安装 Element Plus 官方图标库 `@element-plus/icons-vue`）。
-   - 若选择了**仅 Web 端**：UI 库问题为「Element Plus / Ant Design Vue / 其他」，**推荐项（第一项）为 Element Plus**。选择 Element Plus / Ant Design Vue 时会分别自动加载各自官方图标库 `@element-plus/icons-vue` / `@ant-design/icons-vue`（依赖已并入 UI 库依赖，无需单独处理）。
-   - 图标库问题为「FontAwesome / Iconify / 其他」，**推荐项（第一项）为 FontAwesome**。
-   - 两者均为单选（`multiSelect: false`）；「其他」表示不预装，由用户后续自行安装。
+   等待用户回复后进入步骤 3。用户未作答或回复模糊时，按「仅 Web 端」处理并说明。
 
-   **调用格式要求**：
-   - 每次只能调用 `AskUserQuestion` 一次；顶层参数只能是 `questions` 数组，**不能**传顶层 `question`。
-   - 数组内每个对象必须包含四个字段：`question`、`header`、`multiSelect`、`options`。
-   - 每个 `options` 元素为 `{ label: '显示名称', description: '简短说明' }`。
+3. **询问 UI 库与图标库**：以文本一次性提出两个问题（编号列出选项并标注推荐），格式如下：
+
+   > **Q1 目标 UI 库是？**（仅 Web 端时提问；双端适配跳过）
+   > 1. Element Plus（推荐）
+   > 2. Ant Design Vue
+   > 3. 其他（不预装）
+   >
+   > 选 Element Plus / Ant Design Vue 会自动加载各自官方图标库 `@element-plus/icons-vue` / `@ant-design/icons-vue`。
+   >
+   > **Q2 图标库是？**
+   > 1. FontAwesome（推荐）
+   > 2. Iconify
+   > 3. 其他（不预装）
+   >
+   > 可一起回复，如「1 + 1」；只答一部分时，未答的按推荐项处理并说明。
+
+   等待用户回复。用户未作答或回复模糊时，全部按推荐项处理并说明。
 
 4. **解析选项**：映射为：
    - `dualPlatform`: 布尔值（选择「双端适配」为 `true`）
