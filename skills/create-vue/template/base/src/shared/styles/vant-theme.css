@@ -1,0 +1,59 @@
+/* Vant 主题映射（v4.10.0）
+ * 映射规则：
+ * - 将 Vant 基础色板与语义变量映射到 theme.css 的语义 token；
+ * - 颜色变量均引用 theme.css token，因此随 .dark 切换自动响应；
+ * - 对 Vant 原生 .van-theme-dark 中写死的组件变量，在 .dark 下补充覆盖。
+ */
+:root {
+  /* 常量色板 */
+  --van-black: rgb(var(--color-overlay));
+  --van-white: rgb(var(--color-primary-text));
+
+  /* 灰阶：按使用场景映射到主题语义色 */
+  --van-gray-1: rgb(var(--color-background));
+  --van-gray-2: rgb(var(--color-surface-secondary));
+  --van-gray-3: rgb(var(--color-border));
+  --van-gray-4: rgb(var(--color-border-strong));
+  --van-gray-5: rgb(var(--color-text-muted));
+  --van-gray-6: rgb(var(--color-text-secondary));
+  --van-gray-7: rgb(var(--color-text-secondary));
+  --van-gray-8: rgb(var(--color-text));
+
+  /* 语义色 */
+  --van-primary-color: rgb(var(--color-primary));
+  --van-success-color: rgb(var(--color-success));
+  --van-danger-color: rgb(var(--color-danger));
+  --van-warning-color: rgb(var(--color-warning));
+
+  /* 文字 */
+  --van-text-color: rgb(var(--color-text));
+  --van-text-color-2: rgb(var(--color-text-secondary));
+  --van-text-color-3: rgb(var(--color-text-muted));
+
+  /* 交互/背景/边框 */
+  --van-active-color: rgb(var(--color-surface-secondary));
+  --van-background: rgb(var(--color-background));
+  --van-background-2: rgb(var(--color-surface));
+  --van-background-3: rgb(var(--color-surface-elevated));
+  --van-border-color: rgb(var(--color-border));
+}
+
+.dark {
+  /* Vant 原生 .van-theme-dark 中需要覆盖的组件变量 */
+  --van-button-plain-background: transparent;
+  --van-switch-background: rgb(var(--color-text-muted) / 0.32);
+  --van-picker-loading-mask-color: rgb(var(--color-overlay) / 0.6);
+  --van-picker-mask-color:
+    linear-gradient(180deg, rgb(var(--color-overlay) / 0.6), rgb(var(--color-overlay) / 0.1)),
+    linear-gradient(0deg, rgb(var(--color-overlay) / 0.6), rgb(var(--color-overlay) / 0.1));
+  --van-calendar-month-mark-color: rgb(var(--color-text-muted) / 0.2);
+}
+
+/* Toast 基于 Popup 实现，.van-popup 的 background 与 .van-toast 特异性相同，
+ * 组件样式经 VantResolver 按需注入时加载顺序不保证 toast 在后，
+ * 可能出现 popup 背景（surface 白色）覆盖 toast 背景导致白底白字不可见。
+ * 在 .van-toast 元素上直接覆盖 popup 变量：元素自身声明恒优先于 :root 继承值，与加载顺序无关。
+ */
+.van-toast {
+  --van-popup-background: var(--van-toast-background);
+}

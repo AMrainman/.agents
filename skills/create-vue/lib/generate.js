@@ -133,14 +133,21 @@ function patchEslintConfig(targetDir, { dual }) {
 }
 
 function patchStylesIndex(targetDir, { uiLibraries }) {
-  if (!uiLibraries.includes('element-plus')) return
   const indexPath = join(targetDir, 'src/shared/styles/index.css')
   const content = readFileSync(indexPath, 'utf-8')
-  writeFileSync(
-    indexPath,
-    content +
-      "\n/* Element Plus 暗色变量：html.dark 作用域下覆盖 --el-*，导入后 EP 组件才能随 .dark 类切换日夜间 */\n@import 'element-plus/theme-chalk/dark/css-vars.css';\n"
-  )
+  const mappingImports = []
+  if (uiLibraries.includes('element-plus')) {
+    mappingImports.push(
+      '/* Element Plus 变量映射：--el-* 引用 theme.css 语义 token，随 .dark 自动切换日夜间 */\n@import \'./element-plus-theme.css\';'
+    )
+  }
+  if (uiLibraries.includes('vant')) {
+    mappingImports.push(
+      '/* Vant 变量映射：--van-* 引用 theme.css 语义 token，随 .dark 自动切换日夜间 */\n@import \'./vant-theme.css\';'
+    )
+  }
+  if (!mappingImports.length) return
+  writeFileSync(indexPath, content + '\n' + mappingImports.join('\n') + '\n')
 }
 
 function generateViteConfig(targetDir, { dual, uiLibraries }) {
@@ -437,14 +444,16 @@ function generateAgentsMd(targetDir, { dual, uiLibraries, iconLibrary }) {
   ]
   if (uiLibraries.includes('element-plus')) {
     darkModeLines.push(
-      '- Element Plus 暗色变量已由 `src/shared/styles/index.css` 自动导入（`element-plus/theme-chalk/dark/css-vars.css`），EP 组件随 `.dark` 类自动切换，无需手动处理。'
+      '- Element Plus 的 `--el-*` 变量已由 `src/shared/styles/element-plus-theme.css` 映射到 theme.css 语义 token，随 `.dark` 自动切换，无需官方 css-vars 导入。'
     )
   }
   if (uiLibraries.includes('ant-design-vue')) {
     darkModeLines.push('- Ant Design Vue 4.x 为 cssinjs，暗色需在根节点用 `ConfigProvider` 配置 theme algorithm，骨架未内置，需自行接入。')
   }
   if (uiLibraries.includes('vant')) {
-    darkModeLines.push('- Vant 暗色需 `ConfigProvider theme="dark"`（双端项目的移动侧），骨架未内置，需自行接入。')
+    darkModeLines.push(
+      '- Vant 的 `--van-*` 变量已由 `src/shared/styles/vant-theme.css` 映射到 theme.css 语义 token，随 `.dark` 自动切换，无需 `ConfigProvider theme="dark"`。'
+    )
   }
   darkModeLines.push('')
   lines.push(...darkModeLines)
