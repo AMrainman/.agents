@@ -44,7 +44,7 @@ allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
    ```
 
 3. **询问 UI 库与图标库**：再调用一次 `AskUserQuestion`（两个问题放在同一 `questions` 数组中）。
-   - 若步骤 2 选择了**双端适配**：跳过 UI 库问题，只问图标库（UI 库自动锁定为 Element Plus + Vant）。
+   - 若步骤 2 选择了**双端适配**：跳过 UI 库问题，只问图标库（UI 库自动锁定为 Element Plus + Vant，并默认安装 Element Plus 官方图标库 `@element-plus/icons-vue`）。
    - 若选择了**仅 Web 端**：UI 库问题为「Element Plus / Ant Design Vue / 其他」，**推荐项（第一项）为 Element Plus**。选择 Element Plus / Ant Design Vue 时会分别自动加载各自官方图标库 `@element-plus/icons-vue` / `@ant-design/icons-vue`（依赖已并入 UI 库依赖，无需单独处理）。
    - 图标库问题为「FontAwesome / Iconify / 其他」，**推荐项（第一项）为 FontAwesome**。
    - 两者均为单选（`multiSelect: false`）；「其他」表示不预装，由用户后续自行安装。
