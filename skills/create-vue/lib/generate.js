@@ -36,6 +36,7 @@ export async function generateProject(targetDir, options) {
   patchPackageJson(targetDir, { dual, uiLibraries, iconLibrary })
   patchTailwindConfig(targetDir, { dual })
   patchEslintConfig(targetDir, { dual })
+  patchStylesIndex(targetDir, { uiLibraries })
   generateViteConfig(targetDir, { dual, uiLibraries })
   generateVitestConfig(targetDir, { uiLibraries })
   generateAgentsMd(targetDir, { dual, uiLibraries, iconLibrary })
@@ -129,6 +130,17 @@ function patchEslintConfig(targetDir, { dual }) {
     ? content.replace('  // __DUAL_RESTRICT_IMPORTS__', DUAL_ESLINT_BLOCK)
     : content.replace('\n  // __DUAL_RESTRICT_IMPORTS__', '')
   writeFileSync(configPath, replaced)
+}
+
+function patchStylesIndex(targetDir, { uiLibraries }) {
+  if (!uiLibraries.includes('element-plus')) return
+  const indexPath = join(targetDir, 'src/shared/styles/index.css')
+  const content = readFileSync(indexPath, 'utf-8')
+  writeFileSync(
+    indexPath,
+    content +
+      "\n/* Element Plus 暗色变量：html.dark 作用域下覆盖 --el-*，导入后 EP 组件才能随 .dark 类切换日夜间 */\n@import 'element-plus/theme-chalk/dark/css-vars.css';\n"
+  )
 }
 
 function generateViteConfig(targetDir, { dual, uiLibraries }) {
@@ -416,13 +428,28 @@ function generateAgentsMd(targetDir, { dual, uiLibraries, iconLibrary }) {
     )
   }
 
-  lines.push(
+  const darkModeLines = [
     '### 日间/夜间模式',
     '',
     '- Tailwind 配置 `darkMode: \'class\'`，主题类挂载在 `document.documentElement`。',
     '- 默认跟随系统偏好；手动切换后读取 `localStorage`。',
     '- 统一通过 `themeStore.setTheme()` 或 `useTheme()` 切换主题。',
-    '',
+  ]
+  if (uiLibraries.includes('element-plus')) {
+    darkModeLines.push(
+      '- Element Plus 暗色变量已由 `src/shared/styles/index.css` 自动导入（`element-plus/theme-chalk/dark/css-vars.css`），EP 组件随 `.dark` 类自动切换，无需手动处理。'
+    )
+  }
+  if (uiLibraries.includes('ant-design-vue')) {
+    darkModeLines.push('- Ant Design Vue 4.x 为 cssinjs，暗色需在根节点用 `ConfigProvider` 配置 theme algorithm，骨架未内置，需自行接入。')
+  }
+  if (uiLibraries.includes('vant')) {
+    darkModeLines.push('- Vant 暗色需 `ConfigProvider theme="dark"`（双端项目的移动侧），骨架未内置，需自行接入。')
+  }
+  darkModeLines.push('')
+  lines.push(...darkModeLines)
+
+  lines.push(
     '### MSW Mock',
     '',
     '- 开发环境自动注册 MSW worker（main.ts 中 `enableMocking`）。',
