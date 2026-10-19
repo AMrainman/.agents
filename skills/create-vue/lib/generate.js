@@ -1,7 +1,15 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { dirname, join, resolve } from 'path'
 import { fileURLToPath } from 'url'
-import { UI_LIBRARY_DEPS, ICON_LIBRARY_DEPS, UI_LIBRARY_NAMES, ICON_LIBRARY_NAMES } from './choices.js'
+import {
+  UI_LIBRARY_DEPS,
+  ICON_LIBRARY_DEPS,
+  UI_LIBRARY_NAMES,
+  ICON_LIBRARY_NAMES,
+  UI_RESOLVER_IMPORTS,
+  UI_RESOLVER_CALLS,
+  UI_RESOLVER_TEST_CALLS,
+} from './choices.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -11,8 +19,8 @@ const TEMPLATE_ROOT = resolve(__dirname, '../template')
  * options 结构：
  * {
  *   dualPlatform: boolean,                              // 双端适配（桌面 + 移动 H5）
- *   uiLibrary: 'element-plus' | 'vant' | 'other',       // dualPlatform 时忽略，自动锁定 EP + Vant
- *   iconLibrary: 'fontawesome' | 'heroicons' | 'lucide' | 'other'
+ *   uiLibrary: 'element-plus' | 'ant-design-vue' | 'other', // dualPlatform 时忽略，自动锁定 EP + Vant
+ *   iconLibrary: 'fontawesome' | 'iconify' | 'other'
  * }
  */
 export async function generateProject(targetDir, options) {
@@ -125,8 +133,7 @@ function patchEslintConfig(targetDir, { dual }) {
 
 function generateViteConfig(targetDir, { dual, uiLibraries }) {
   const hasElementPlus = uiLibraries.includes('element-plus')
-  const hasVant = uiLibraries.includes('vant')
-  const hasResolver = hasElementPlus || hasVant
+  const resolverImports = uiLibraries.map(ui => UI_RESOLVER_IMPORTS[ui]).filter(Boolean)
 
   const imports = [
     "import { defineConfig } from 'vite'",
@@ -135,18 +142,14 @@ function generateViteConfig(targetDir, { dual, uiLibraries }) {
     "import AutoImport from 'unplugin-auto-import/vite'",
     "import Components from 'unplugin-vue-components/vite'",
   ]
-  if (hasResolver) {
-    const resolvers = [hasElementPlus && 'ElementPlusResolver', hasVant && 'VantResolver'].filter(Boolean)
-    imports.push(`import { ${resolvers.join(', ')} } from 'unplugin-vue-components/resolvers'`)
+  if (resolverImports.length) {
+    imports.push(`import { ${resolverImports.join(', ')} } from 'unplugin-vue-components/resolvers'`)
   }
   if (dual) {
     imports.push("import basicSsl from '@vitejs/plugin-basic-ssl'")
   }
 
-  const componentsResolvers = [
-    hasElementPlus && "ElementPlusResolver({ importStyle: 'css' })",
-    hasVant && "VantResolver({ importStyle: true })",
-  ].filter(Boolean)
+  const componentsResolvers = uiLibraries.map(ui => UI_RESOLVER_CALLS[ui]).filter(Boolean)
 
   const pluginLines = [
     ...(dual
@@ -219,8 +222,7 @@ ${configBody}
 
 function generateVitestConfig(targetDir, { uiLibraries }) {
   const hasElementPlus = uiLibraries.includes('element-plus')
-  const hasVant = uiLibraries.includes('vant')
-  const hasUi = hasElementPlus || hasVant
+  const hasUi = uiLibraries.length > 0
 
   const imports = [
     "import { resolve } from 'path'",
@@ -229,12 +231,12 @@ function generateVitestConfig(targetDir, { uiLibraries }) {
   ]
   if (hasUi) {
     imports.push("import Components from 'unplugin-vue-components/vite'")
-    const resolvers = [hasElementPlus && 'ElementPlusResolver', hasVant && 'VantResolver'].filter(Boolean)
-    imports.push(`import { ${resolvers.join(', ')} } from 'unplugin-vue-components/resolvers'`)
+    const resolverImports = uiLibraries.map(ui => UI_RESOLVER_IMPORTS[ui]).filter(Boolean)
+    imports.push(`import { ${resolverImports.join(', ')} } from 'unplugin-vue-components/resolvers'`)
   }
 
-  const resolvers = [hasElementPlus && 'ElementPlusResolver()', hasVant && 'VantResolver()'].filter(Boolean)
-  const noExternal = [hasElementPlus && "'element-plus'", hasVant && "'vant'"].filter(Boolean)
+  const resolvers = uiLibraries.map(ui => UI_RESOLVER_TEST_CALLS[ui]).filter(Boolean)
+  const noExternal = uiLibraries.map(ui => `'${ui}'`)
 
   const cssIgnorePlugin = `
 /**

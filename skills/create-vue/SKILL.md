@@ -13,12 +13,17 @@ allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
 ## 用法
 
 ```bash
-/create-vue
+/create-vue [project-name]
 ```
+
+- 带 `project-name`（如 `/create-vue vue3`）：在当前目录创建同名子目录并在其中生成项目；**若当前目录已存在同名文件或文件夹，直接结束创建并提示用户**。
+- 不带 `project-name`：在当前目录直接生成（见步骤 1 的目录检查）。
 
 ## 执行步骤
 
-1. **检查目录状态**：用 Bash 执行 `ls -la` 查看当前目录。若目录非空（除 `README.md` 外），向用户说明情况并等待用户决定是否继续。
+1. **检查目录状态**：
+   - 若命令带了项目名：用 Bash 执行 `ls -la <project-name>` 检查同名文件/文件夹是否已存在。已存在则提示用户「当前目录已存在名为 `<project-name>` 的文件或文件夹，创建已取消」并**直接结束**。
+   - 若没带项目名：用 Bash 执行 `ls -la` 查看当前目录。若目录非空（除 `README.md` 外），向用户说明情况并等待用户决定是否继续。
 
 2. **询问端适配**：调用一次 `AskUserQuestion`（单选）：
 
@@ -40,8 +45,8 @@ allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
 
 3. **询问 UI 库与图标库**：再调用一次 `AskUserQuestion`（两个问题放在同一 `questions` 数组中）。
    - 若步骤 2 选择了**双端适配**：跳过 UI 库问题，只问图标库（UI 库自动锁定为 Element Plus + Vant）。
-   - 若选择了**仅 Web 端**：UI 库问题为「Element Plus / Vant / 其他」，**推荐项（第一项）为 Element Plus**。
-   - 图标库问题为「FontAwesome / Heroicons / Lucide / 其他」，**推荐项（第一项）为 FontAwesome**。
+   - 若选择了**仅 Web 端**：UI 库问题为「Element Plus / Ant Design Vue / 其他」，**推荐项（第一项）为 Element Plus**。选择 Element Plus / Ant Design Vue 时会分别自动加载各自官方图标库 `@element-plus/icons-vue` / `@ant-design/icons-vue`（依赖已并入 UI 库依赖，无需单独处理）。
+   - 图标库问题为「FontAwesome / Iconify / 其他」，**推荐项（第一项）为 FontAwesome**。
    - 两者均为单选（`multiSelect: false`）；「其他」表示不预装，由用户后续自行安装。
 
    **调用格式要求**：
@@ -60,10 +65,10 @@ allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
 6. **生成项目**：用户确认后，调用 Bash：
 
    ```bash
-   node ~/.agents/skills/create-vue/index.js --options '<json>'
+   node ~/.agents/skills/create-vue/index.js [project-name] --options '<json>'
    ```
 
-   其中 `<json>` 是步骤 4 构造的 JSON 字符串。
+   其中 `[project-name]` 为步骤 1 中用户给出的项目名（未提供则省略），`<json>` 是步骤 4 构造的 JSON 字符串。重名拦截由脚本自动完成。
 
 7. **报告结果**：生成完成后告知用户项目骨架已生成（含 `AGENTS.md` 约定文件、`.storybook/` 配置与多环境 `.env`），并提示手动执行 `npm install` 与 `npm run dev`（另可用 `npm run storybook` 启动组件开发环境）。
    - `package.json` 已内置 `postinstall` 脚本（`msw init public/ --save`），执行 `npm install` 后自动生成 `public/mockServiceWorker.js`，避免开发环境出现"应用启动失败"。
@@ -75,6 +80,16 @@ allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
   "dualPlatform": false,
   "uiLibrary": "element-plus",
   "iconLibrary": "fontawesome"
+}
+```
+
+仅 Web 端 + Ant Design Vue + Iconify 示例：
+
+```json
+{
+  "dualPlatform": false,
+  "uiLibrary": "ant-design-vue",
+  "iconLibrary": "iconify"
 }
 ```
 
@@ -95,11 +110,10 @@ allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
 | 端适配 | 仅 Web 端 | `dualPlatform: false` |
 | 端适配 | 双端适配（桌面 + 移动 H5） | `dualPlatform: true` |
 | UI 库 | Element Plus | `element-plus` |
-| UI 库 | Vant | `vant` |
+| UI 库 | Ant Design Vue | `ant-design-vue` |
 | UI 库 | 其他 | `other` |
 | 图标库 | FontAwesome | `fontawesome` |
-| 图标库 | Heroicons | `heroicons` |
-| 图标库 | Lucide | `lucide` |
+| 图标库 | Iconify | `iconify` |
 | 图标库 | 其他 | `other` |
 
 ## 模板结构
