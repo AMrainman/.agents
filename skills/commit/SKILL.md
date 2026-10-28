@@ -38,24 +38,33 @@ allowed-tools: Bash, Read, AskUserQuestion
   - 若当前对话上下文已有相关信息，可与参数内容结合理解。
 - **无参数模式**：跳过本步骤，直接进入 Step 2。
 
-### Step 2：分析 git 变更
+### Step 2：确定提交范围并暂存
 
-依次执行以下 bash 命令：
+根据当前对话上下文确定本次提交范围：
+
+- **上下文有本次修改的文件**：仅将明确属于本次任务且当前确有变更的文件列入提交清单，然后执行 `git add -A -- <文件1> <文件2> ...`。示例、历史任务或仅讨论但未修改的文件不纳入清单；其他变更保持原状。
+- **上下文没有本次修改的文件**：执行 `git add -A`，暂存全部变更，包括未跟踪文件。
+
+暂存后，在对应提交范围内执行：
 
 ```bash
-# 获取变更文件列表
-git diff HEAD --name-status 2>/dev/null || git diff --cached --name-status
+# 获取变更文件列表（指定文件模式需追加 -- <文件1> <文件2> ...）
+git diff --cached --name-status
 
-# 获取详细 diff
-git diff HEAD 2>/dev/null || git diff --cached
+# 获取详细 diff（指定文件模式需追加 -- <文件1> <文件2> ...）
+git diff --cached
 ```
 
-分析每处改动：
+若提交范围内没有变更，直接报告“没有可提交的变更”，不创建空提交。
+
+### Step 3：分析 git 变更
+
+分析暂存后的每处改动：
 
 - **带参数模式**：对照参数背景，判断哪些是核心改动、哪些是配套调整。
 - **无参数模式**：仅根据代码变更本身，判断改动的类型与范围。
 
-### Step 3：生成 commit message
+### Step 4：生成 commit message
 
 按以下格式生成：
 
@@ -77,24 +86,28 @@ git diff HEAD 2>/dev/null || git diff --cached
 - 要点不超过 6 条，相似改动合并
 - 全部使用中文
 
-### Step 4：直接提交
+### Step 5：直接提交
 
 **直接执行提交**，无需确认，也不在提交前展示 commit message：
 
 ```bash
-git commit -a -m "<commit_message>"
+# 指定文件模式：仅提交清单中的文件，其他已暂存变更也不会被纳入
+git commit -m "<commit_message>" -- <文件1> <文件2> ...
+
+# 全部文件模式
+git commit -m "<commit_message>"
 ```
 
 提交成功后运行 `git log --oneline -1` 获取提交哈希。
 
-### Step 5：是否推送
+### Step 6：是否推送
 
 提交成功后，判断是否存在远端仓库：
 
 - 若存在，直接推送
 - 若不存在，不推送，继续输出最终结果
 
-### Step 6：输出最终结果
+### Step 7：输出最终结果
 
 提交和推送流程结束后，仅输出一次最终结果，不重复过程说明、命令输出、diff 或子代理返回内容。
 
