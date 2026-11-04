@@ -213,6 +213,15 @@
       "pluginName": "mattpocock-skills",
       "installedAt": "2026-10-28T06:29:52.830Z",
       "updatedAt": "2026-10-28T06:29:52.830Z"
+    },
+    "hithink-finance": {
+      "source": "hithink-tech/financial-api",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/hithink-tech/financial-api.git",
+      "skillPath": "skills/hithink-finance/SKILL.md",
+      "skillFolderHash": "de03af73963597340f45151bf52a0ca356fc6438",
+      "installedAt": "2026-08-29T14:20:40.892Z",
+      "updatedAt": "2026-08-29T14:20:40.892Z"
     }
   },
   "dismissed": {
