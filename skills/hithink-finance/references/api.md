@@ -1,9 +1,12 @@
 # REST API 契约
 
-本 Skill 内置契约是“同花顺金融数据服务”上游 REST API 在本仓库中的唯一契约源。它面向直接 HTTP 调用者、SDK/CLI 维护者和 AI Agent，统一维护端点、参数、响应字段、错误码与能力边界。
+本 Skill 内置契约是“同花顺金融数据服务”的 REST API 文档入口，面向 HTTP 调用者、SDK/CLI 维护者和 AI Agent。接口正文从文档源确定性同步，按业务域与模块定位接口。
 
+查找具体接口优先使用本地业务路由。
 
-## 通用协议
+## 通用约定
+
+以下约定适用于本目录接口；具体参数、字段单位和业务限制以接口页为准。实际请求前读取本节一次。
 
 | 项目 | 契约 |
 | --- | --- |
@@ -14,11 +17,14 @@
 | 响应信封 | `{code, message, request_id, data}` |
 | 标的代码 | 完整 `thscode`，例如 `600519.SH`；不要猜交易所后缀 |
 | 时间戳 | 毫秒 Unix 时间戳；具体日期字符串格式以端点页为准 |
+| 时区 | 日期和交易日窗口按 `Asia/Shanghai` 解释 |
 | 空值 | `null` 表示未披露或上游无值，不得自动补零 |
 
-`data` 字段始终存在：成功时承载端点数据，业务错误时为 `null`。调用方不得以“字段缺失”判断旧版错误信封，也不得在错误时把 `null` 当作成功空结果。
+`data` 字段始终存在：成功时承载端点数据，业务错误时为 `null`。历史及财报批量接口按代码返回有效目标组，合法空组保留 `timestamp:null,item:[]`；部分无效目标省略其组且外层 `code=0`。调用方应检查外层 `code` 并使用返回的有效组。
 
-获取统一 API Key：<https://fuyao.aicubes.cn/admin>。API Key 不得写入代码、Prompt、日志、公开配置或 Git 提交。
+响应记录中的同花顺代码（如 `thscode`）无法确定时可为 `null`。调用方应保留代码字段、原记录、业务值、顺序与分页信息。
+
+获取统一 API Key：<https://fuyao.aicubes.cn/admin/>。用户可以把 Key 提供给 Agent 上下文以便代配；Agent 不复述，并提示聊天平台可能保留消息记录。Key 不得写入代码、日志、公开配置或 Git 提交。
 
 最小请求：
 
@@ -27,22 +33,27 @@ curl 'https://fuyao.aicubes.cn/api/meta/tickers/search?q=600519&limit=1' \
   -H 'X-api-key: <API_KEY>'
 ```
 
-## 契约导航
+## 按业务选择接口
 
-先读 [能力与意图路由](api/capability-map.md)，再按需要打开一个端点组：
+- [公共基础数据](api/meta/README.md)：标的目录与搜索、交易日历和交易时段。
+- 股票数据
+  - [A 股](api/a-share/README.md)：股票价格、财务、估值、竞价与特色数据。指数走势进入指数域，基金净值进入基金域。
+  - [港股](api/hk-share/README.md)：新股递表、认购与上市日历、发行价格区间及每手股数。
+- [指数与板块](api/index/README.md)：指数和板块目录、成分股、行情。先目录或搜索，再查成分与价格。
+- [公募基金](api/fund/README.md)：净值与场内成交价格分别进入业绩与行情；最新披露与历史持仓分别选择对应接口。
+- [期货](api/futures/README.md)：先确定品种或合约，再查询持仓、仓单、基差、交易日程与行情。
+- [期权](api/options/README.md)：期权品种、合约与行情；按完整合约代码定位。
+- [资讯事件](api/news/README.md)：资讯详情、快讯、公告解读、热门专题、日期范围异动解读与个股分时新闻；事件检索按端内范围使用。
 
-| 领域 | 契约 |
-| --- | --- |
-| 标的检索、代码消歧、代码表 | [元信息端点](api/endpoints-meta.md) |
-| 个股行情、历史 K 线、公司行动 | [行情与公司行为端点](api/endpoints-prices.md) |
-| 利润表、资产负债表、现金流量表、财务指标 | [财务数据端点](api/endpoints-financials.md) |
-| A 股市盈率、市净率、市销率和市现率快照 | [估值数据端点](api/endpoints-valuations.md) |
-| 交易日历 | [交易日历端点](api/endpoints-calendar.md) |
-| A 股集合竞价快照与短期基准 | [集合竞价端点](api/endpoints-auction.md) |
-| 指数/板块目录、成分股、指数行情 | [指数与板块端点](api/endpoints-index.md) |
-| 基金资料、经理、净值、收益、持仓、财务、资讯和场内行情 | [公募基金端点](api/endpoints-fund.md) |
-| 涨停、跌停、炸板、连板、异动、热榜、龙虎榜 | [特色数据端点](api/endpoints-special-data.md) |
-| 全市场 Parquet 与本地建库数据源 | [全市场数据导出](api/endpoints-market-dumps.md) |
+[全市场数据导出](api/market-dumps.md)
+
+## 端内能力说明
+
+标记为“端内专用”的数据能力已内置于同花顺AI客户端，可在客户端中免配置使用；这些接口不作为公开 REST API、MCP、CLI 或 Python SDK 的接入入口。
+
+- 接口文档可用于理解参数与字段；API Key 不赋予端内专用能力的调用权限。
+- 用户需要端内数据时，说明公开接入边界，并提供[同花顺AI客户端入口](https://lumi.10jqka.com.cn/?channel=Hithink-API)。
+- 选择公开替代接口时，先确认其数据范围、频率与时间覆盖满足需求。
 
 ## 错误处理
 
@@ -57,6 +68,7 @@ curl 'https://fuyao.aicubes.cn/api/meta/tickers/search?q=600519&limit=1' \
 | `1004` | 参数冲突 | 按端点互斥规则重组参数 |
 | `2001` | 未认证 | 检查 `X-api-key` 是否存在且格式正确 |
 | `2003` | 无权限或 Key 无效 | 前往 API Key 管理页检查授权或重新签发 |
+| `2004` | 当前凭据未获该能力授权 | 按接口使用范围选择可用能力，保留请求标识供排查 |
 | `3001` | 标的不存在 | 先通过元信息端点消歧并核对资产类别与 `thscode` |
 | `3002` | 数据尚未准备 | 保留 `request_id` 与口径，稍后再查，不得补零或使用模拟数据 |
 | `3004` | 目标类型不支持该能力 | 选择适用于该资产类型的端点，不重试原请求 |
@@ -67,11 +79,8 @@ curl 'https://fuyao.aicubes.cn/api/meta/tickers/search?q=600519&limit=1' \
 
 ## 大结果规则
 
-全市场、分页全集、多标的或多年数据必须落盘。调用者只在终端或对话中报告文件路径、行数、时间窗口和摘要，不展开原始结果。全市场历史建库优先使用 [Market Dumps](api/endpoints-market-dumps.md)，不要逐标的请求多年 REST 数据。
+全市场、分页全集、多标的或多年数据必须落盘。调用者只在终端或对话中报告文件路径、行数、时间窗口和摘要，不展开原始结果。全市场历史建库优先使用 [Market Dumps](api/market-dumps.md)，不要逐标的请求多年 REST 数据。
 
 ## 维护规则
 
-1. 先根据上游变更更新本目录。
-2. 运行 `python scripts/sync_skill_contracts.py` 镜像到独立 Skill。
-3. 运行 `python scripts/sync_skill_contracts.py --check` 和相关契约测试。
-4. CLI/Python 文档只同步命令或运行方式，不复制本目录的字段契约。
+接口正文随源文档同步更新，业务索引负责选路，各接入方式按需链接接口页。Market Dumps 的 API Key 下载契约由本项目维护。
